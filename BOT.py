@@ -1,8 +1,12 @@
 import os
+from threading import Thread
 
+from flask import Flask
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
+
+web_app = Flask(__name__)
 
 HELLO_TEXT = "\U0001f44b \u041f\u0440\u0438\u0432\u0435\u0442"
 BYE_TEXT = "\U0001f44b \u041f\u043e\u043a\u0430"
@@ -19,6 +23,16 @@ HELLO_ONLY_KEYBOARD = ReplyKeyboardMarkup(
     resize_keyboard=True,
     is_persistent=True,
 )
+
+
+@web_app.get("/")
+def health_check() -> str:
+    return "Bot is running"
+
+
+def start_web_server() -> None:
+    port = int(os.environ.get("PORT", "10000"))
+    web_app.run(host="0.0.0.0", port=port)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -60,6 +74,8 @@ def main() -> None:
             "\u0431\u043e\u0442\u0430 \u0432 \u043f\u0435\u0440\u0435\u043c\u0435\u043d\u043d\u0443\u044e "
             "\u043e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u044f BOT_TOKEN."
         )
+
+    Thread(target=start_web_server, daemon=True).start()
 
     app = Application.builder().token(token).build()
 
